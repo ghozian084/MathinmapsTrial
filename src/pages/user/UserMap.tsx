@@ -146,14 +146,14 @@ export default function UserMap() {
       <header className="bg-white border-b border-stone-200 px-6 py-4 flex items-center justify-between shrink-0 z-10 relative shadow-sm">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <MapIcon className="text-emerald-600 w-6 h-6" />
-            <h1 className="text-xl font-bold text-stone-900">TRAILBLAZER</h1>
+            <MapIcon className="text-blue-600 w-6 h-6" />
+            <h1 className="text-xl font-bold text-stone-900">Mathinmaps</h1>
           </div>
           <div className="h-6 w-px bg-stone-300 mx-2"></div>
           <select
             value={currentMap.name}
             onChange={(e) => navigate(`/map/${e.target.value}`)}
-            className="bg-stone-50 border border-stone-200 text-stone-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 outline-none"
+            className="bg-stone-50 border border-stone-200 text-stone-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none"
           >
             {maps.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
           </select>
@@ -223,7 +223,7 @@ export default function UserMap() {
                     <p className="text-sm text-stone-600 mb-4 line-clamp-3">{point.description}</p>
                     <button
                       onClick={() => handleStartTask(point)}
-                      className="w-full bg-emerald-600 text-white font-medium py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+                      className="w-full bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       {completedPoints.has(point.id) ? 'Review Tasks' : 'Start Task'}
                     </button>

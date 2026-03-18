@@ -25,10 +25,10 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-stone-100 p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 space-y-8">
         <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-            <MapPin className="w-8 h-8 text-emerald-600" />
+          <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+            <MapPin className="w-8 h-8 text-blue-600" />
           </div>
-          <h1 className="text-3xl font-bold text-stone-900">TRAILBLAZER</h1>
+          <h1 className="text-3xl font-bold text-stone-900">Mathinmaps</h1>
           <p className="text-stone-500 mt-2">Learning Adventures</p>
         </div>
 

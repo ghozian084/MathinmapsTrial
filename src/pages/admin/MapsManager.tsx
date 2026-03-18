@@ -88,7 +88,7 @@ export default function MapsManager() {
             setFormData({ name: '', description: '', centerLat: -6.200000, centerLng: 106.816666, zoom: 13, imageUrl: '' });
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add New Map
@@ -164,7 +164,7 @@ export default function MapsManager() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     placeholder="e.g., Forest Discovery"
                   />
                 </div>
@@ -173,7 +173,7 @@ export default function MapsManager() {
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     rows={3}
                   />
                 </div>
@@ -203,7 +203,7 @@ export default function MapsManager() {
                       required
                       value={formData.centerLat}
                       onChange={(e) => setFormData({ ...formData, centerLat: parseFloat(e.target.value) })}
-                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-stone-50"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-stone-50"
                     />
                   </div>
                   <div>
@@ -214,7 +214,7 @@ export default function MapsManager() {
                       required
                       value={formData.centerLng}
                       onChange={(e) => setFormData({ ...formData, centerLng: parseFloat(e.target.value) })}
-                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-stone-50"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-stone-50"
                     />
                   </div>
                   <div>
@@ -226,7 +226,7 @@ export default function MapsManager() {
                       max="20"
                       value={formData.zoom}
                       onChange={(e) => setFormData({ ...formData, zoom: parseInt(e.target.value) })}
-                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     />
                   </div>
                 </div>
@@ -243,7 +243,7 @@ export default function MapsManager() {
               <button
                 type="submit"
                 form="map-form"
-                className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
               >
                 {editingMap ? 'Save Changes' : 'Add Map'}
               </button>

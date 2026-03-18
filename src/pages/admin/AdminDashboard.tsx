@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Map, MapPin, ListTodo, Users, Activity, LogOut } from 'lucide-react';
+import { Map, MapPin, ListTodo, Users, Activity, LogOut, Link } from 'lucide-react';
 import MapsManager from './MapsManager';
 import PointsManager from './PointsManager';
+import ConnectionsManager from './ConnectionsManager';
 import TasksManager from './TasksManager';
 import UsersManager from './UsersManager';
 import Monitoring from './Monitoring';
 
-type Tab = 'maps' | 'points' | 'tasks' | 'users' | 'monitoring';
+type Tab = 'maps' | 'points' | 'connections' | 'tasks' | 'users' | 'monitoring';
 
 export default function AdminDashboard() {
   const { signOut, profile } = useAuth();
@@ -16,6 +17,7 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'maps', label: 'Maps', icon: Map },
     { id: 'points', label: 'Points', icon: MapPin },
+    { id: 'connections', label: 'Connections', icon: Link },
     { id: 'tasks', label: 'Tasks', icon: ListTodo },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'monitoring', label: 'Monitoring', icon: Activity },
@@ -27,8 +29,8 @@ export default function AdminDashboard() {
       <div className="w-64 bg-white border-r border-stone-200 flex flex-col">
         <div className="p-6 border-b border-stone-200">
           <h1 className="text-xl font-bold text-stone-900 flex items-center gap-2">
-            <MapPin className="text-emerald-600" />
-            TRAILBLAZER
+            <MapPin className="text-blue-600" />
+            Mathinmaps
           </h1>
           <p className="text-xs text-stone-500 mt-1">Admin Dashboard</p>
         </div>
@@ -42,7 +44,7 @@ export default function AdminDashboard() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-emerald-50 text-emerald-700'
+                    ? 'bg-blue-50 text-blue-700'
                     : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                 }`}
               >
@@ -73,6 +75,7 @@ export default function AdminDashboard() {
         <div className="p-8">
           {activeTab === 'maps' && <MapsManager />}
           {activeTab === 'points' && <PointsManager />}
+          {activeTab === 'connections' && <ConnectionsManager />}
           {activeTab === 'tasks' && <TasksManager />}
           {activeTab === 'users' && <UsersManager />}
           {activeTab === 'monitoring' && <Monitoring />}

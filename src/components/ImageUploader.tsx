@@ -67,7 +67,7 @@ export default function ImageUploader({ value, onChange }: ImageUploaderProps) {
         <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-stone-300 border-dashed rounded-lg cursor-pointer bg-stone-50 hover:bg-stone-100 transition-colors">
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
             {isUploading ? (
-              <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-2" />
+              <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-2" />
             ) : (
               <Upload className="w-8 h-8 text-stone-400 mb-2" />
             )}

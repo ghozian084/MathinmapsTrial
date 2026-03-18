@@ -136,7 +136,7 @@ service cloud.firestore {
       allow update: if isAuthenticated() && isValidUserProgress(request.resource.data) && 
                     request.auth.uid == request.resource.data.userId &&
                     request.resource.data.userId == resource.data.userId;
-      allow delete: if isAdmin();
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.userId || isAdmin());
     }
   }
 }

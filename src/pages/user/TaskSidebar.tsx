@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { X, CheckCircle, XCircle, HelpCircle, Lightbulb, RotateCcw } from 'lucide-react';
+import { X, CheckCircle, XCircle, HelpCircle, Lightbulb, RotateCcw, Loader2 } from 'lucide-react';
+import { GoogleGenAI } from '@google/genai';
 
 interface Task {
   id: string;
@@ -41,6 +42,7 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
   const [progress, setProgress] = useState<Record<string, UserProgress>>({});
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showHint, setShowHint] = useState<Record<string, boolean>>({});
+  const [isSubmitting, setIsSubmitting] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!point || !isOpen) return;
@@ -83,6 +85,8 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
     const answer = answers[taskId] || '';
     if (!answer.trim()) return;
 
+    setIsSubmitting(prev => ({ ...prev, [taskId]: true }));
+
     // Simple Regex matching
     let isCorrect = false;
     try {
@@ -92,16 +96,37 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
       console.error('Invalid regex in task:', err);
     }
 
-    // Parse feedback logic (simple simulation)
-    // IF MATCH THEN 'Msg A' ELSE IF PARTIAL THEN 'Msg B' ELSE 'Msg C'
     let feedbackMsg = isCorrect ? 'Correct! Well done.' : 'Incorrect. Try again.';
-    if (task.feedbackLogic) {
-      if (isCorrect && task.feedbackLogic.includes('IF MATCH THEN')) {
-        const match = task.feedbackLogic.match(/IF MATCH THEN '([^']+)'/);
-        if (match) feedbackMsg = match[1];
-      } else if (!isCorrect && task.feedbackLogic.includes('ELSE')) {
-        const match = task.feedbackLogic.match(/ELSE '([^']+)'/);
-        if (match) feedbackMsg = match[1];
+
+    try {
+      if (process.env.GEMINI_API_KEY) {
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const prompt = `You are a helpful math tutor. The student is answering a question: "${task.question}". 
+The correct answer format is defined by the regex: "${task.answerKeyRegex}".
+The student answered: "${answer}".
+The student's answer is evaluated as ${isCorrect ? 'CORRECT' : 'INCORRECT'}.
+Provide a short, constructive, and encouraging feedback message (max 2 sentences). Do not reveal the exact answer if they are incorrect, but give a small hint or encouragement.`;
+        
+        const response = await ai.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: prompt,
+        });
+        
+        if (response.text) {
+          feedbackMsg = response.text.trim();
+        }
+      }
+    } catch (error) {
+      console.error('Error generating AI feedback:', error);
+      // Fallback to basic logic if AI fails
+      if (task.feedbackLogic) {
+        if (isCorrect && task.feedbackLogic.includes('IF MATCH THEN')) {
+          const match = task.feedbackLogic.match(/IF MATCH THEN '([^']+)'/);
+          if (match) feedbackMsg = match[1];
+        } else if (!isCorrect && task.feedbackLogic.includes('ELSE')) {
+          const match = task.feedbackLogic.match(/ELSE '([^']+)'/);
+          if (match) feedbackMsg = match[1];
+        }
       }
     }
 
@@ -122,6 +147,8 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
       }
     } catch (error) {
       console.error('Error saving progress:', error);
+    } finally {
+      setIsSubmitting(prev => ({ ...prev, [taskId]: false }));
     }
   };
 
@@ -164,7 +191,7 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
     <div className="absolute top-0 right-0 h-full w-96 bg-white shadow-2xl border-l border-stone-200 flex flex-col z-20 transform transition-transform duration-300">
       <div className="flex items-center justify-between p-6 border-b border-stone-200 bg-stone-50 shrink-0">
         <div>
-          <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">{mapName}</p>
+          <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">{mapName}</p>
           <h2 className="text-xl font-bold text-stone-900">{point.title}</h2>
         </div>
         <button
@@ -187,8 +214,8 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
             const isCompleted = taskProgress?.isCorrect;
 
             return (
-              <div key={task.id} className={`bg-white rounded-2xl border ${isCompleted ? 'border-emerald-200 bg-emerald-50/30' : 'border-stone-200'} overflow-hidden shadow-sm`}>
-                <div className={`px-4 py-3 border-b ${isCompleted ? 'border-emerald-100 bg-emerald-50' : 'border-stone-100 bg-stone-50'} flex items-center justify-between`}>
+              <div key={task.id} className={`bg-white rounded-2xl border ${isCompleted ? 'border-blue-200 bg-blue-50/30' : 'border-stone-200'} overflow-hidden shadow-sm`}>
+                <div className={`px-4 py-3 border-b ${isCompleted ? 'border-blue-100 bg-blue-50' : 'border-stone-100 bg-stone-50'} flex items-center justify-between`}>
                   <h3 className="font-semibold text-stone-800">Task {task.taskNumber}</h3>
                   <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                     task.difficulty === 'Easy' ? 'bg-green-100 text-green-700' :
@@ -212,12 +239,12 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
 
                   {isCompleted ? (
                     <div className="space-y-3">
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+                        <CheckCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium text-emerald-900">Completed!</p>
-                          <p className="text-sm text-emerald-700 mt-1">Your answer: <span className="font-semibold">{taskProgress.userAnswer}</span></p>
-                          {taskProgress.feedback && <p className="text-sm text-emerald-600 mt-2 italic">{taskProgress.feedback}</p>}
+                          <p className="text-sm font-medium text-blue-900">Completed!</p>
+                          <p className="text-sm text-blue-700 mt-1">Your answer: <span className="font-semibold">{taskProgress.userAnswer}</span></p>
+                          {taskProgress.feedback && <p className="text-sm text-blue-600 mt-2 italic">{taskProgress.feedback}</p>}
                         </div>
                       </div>
                       <button
@@ -225,7 +252,7 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
                         className="w-full flex items-center justify-center gap-2 py-2 bg-white border border-stone-300 text-stone-700 font-medium rounded-xl hover:bg-stone-50 transition-colors"
                       >
                         <RotateCcw className="w-4 h-4" />
-                        Retake Task
+                        Erase Answer
                       </button>
                     </div>
                   ) : (
@@ -235,16 +262,16 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
                         placeholder="Your answer..."
                         value={answers[task.id] || ''}
                         onChange={(e) => setAnswers(prev => ({ ...prev, [task.id]: e.target.value }))}
-                        className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                        className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                       />
                       
                       <div className="flex items-center gap-2">
                         <button
                           type="submit"
-                          disabled={!answers[task.id]?.trim()}
-                          className="flex-1 bg-emerald-600 text-white font-medium py-2 rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={!answers[task.id]?.trim() || isSubmitting[task.id]}
+                          className="flex-1 bg-blue-600 text-white font-medium py-2 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         >
-                          Submit Answer
+                          {isSubmitting[task.id] ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Answer'}
                         </button>
                         {task.hintText && (
                           <button

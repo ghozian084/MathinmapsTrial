@@ -99,7 +99,7 @@ export default function TasksManager() {
             setFormData({ pointId: points[0]?.id || '', taskNumber: 1, question: '', answerKeyRegex: '', feedbackLogic: '', difficulty: 'Medium', imageUrl: '', objectDescription: '', hintText: '' });
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Add New Task
@@ -197,7 +197,7 @@ export default function TasksManager() {
                       required
                       value={formData.pointId}
                       onChange={(e) => setFormData({ ...formData, pointId: e.target.value })}
-                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     >
                       <option value="" disabled>Select a point</option>
                       {points.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
@@ -211,7 +211,7 @@ export default function TasksManager() {
                       min="1"
                       value={formData.taskNumber}
                       onChange={(e) => setFormData({ ...formData, taskNumber: parseInt(e.target.value) })}
-                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     />
                   </div>
                 </div>
@@ -221,7 +221,7 @@ export default function TasksManager() {
                     required
                     value={formData.question}
                     onChange={(e) => setFormData({ ...formData, question: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     rows={2}
                   />
                 </div>
@@ -242,7 +242,7 @@ export default function TasksManager() {
                     required
                     value={formData.answerKeyRegex}
                     onChange={(e) => setFormData({ ...formData, answerKeyRegex: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none font-mono text-sm"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm"
                     placeholder="e.g., ^(?i)apple$"
                   />
                   <p className="text-xs text-stone-500 mt-1">Use standard regular expressions. Example: ^(?i)answer$ for case-insensitive exact match.</p>
@@ -252,7 +252,7 @@ export default function TasksManager() {
                   <textarea
                     value={formData.feedbackLogic}
                     onChange={(e) => setFormData({ ...formData, feedbackLogic: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none font-mono text-sm"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm"
                     rows={3}
                     placeholder="IF MATCH THEN 'Correct!' ELSE 'Try again.'"
                   />
@@ -263,7 +263,7 @@ export default function TasksManager() {
                     <select
                       value={formData.difficulty}
                       onChange={(e) => setFormData({ ...formData, difficulty: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                      className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     >
                       <option value="Easy">Easy</option>
                       <option value="Medium">Medium</option>
@@ -283,7 +283,7 @@ export default function TasksManager() {
                   <textarea
                     value={formData.objectDescription}
                     onChange={(e) => setFormData({ ...formData, objectDescription: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     rows={2}
                   />
                 </div>
@@ -292,7 +292,7 @@ export default function TasksManager() {
                   <textarea
                     value={formData.hintText}
                     onChange={(e) => setFormData({ ...formData, hintText: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     rows={2}
                   />
                 </div>
@@ -309,7 +309,7 @@ export default function TasksManager() {
               <button
                 type="submit"
                 form="task-form"
-                className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
               >
                 {editingTask ? 'Save Changes' : 'Add Task'}
               </button>

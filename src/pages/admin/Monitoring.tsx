@@ -96,7 +96,7 @@ export default function Monitoring() {
                   <td className="px-6 py-4 text-stone-600 truncate max-w-xs">{p.userAnswer}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      p.isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                      p.isCorrect ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
                     }`}>
                       {p.isCorrect ? 'Correct' : 'Incorrect'}
                     </span>
