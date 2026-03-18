@@ -4,6 +4,7 @@ import { db } from '../../firebase';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import LocationPickerMap from '../../components/LocationPickerMap';
 import ImageUploader from '../../components/ImageUploader';
+import GuideBox from '../../components/GuideBox';
 
 interface MapData {
   id: string;
@@ -93,6 +94,18 @@ export default function MapsManager() {
           Add New Map
         </button>
       </div>
+
+      <GuideBox title="How to Create a Map">
+        <div className="space-y-3">
+          <p>A <strong>Map</strong> is the main container for your locations and tasks. It represents a specific geographical area (e.g., "City Park", "Historical Downtown").</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>Map Name:</strong> The title students will see (e.g., <em>"Botanical Garden Adventure"</em>).</li>
+            <li><strong>Center Location:</strong> Click on the interactive map to set the default starting view when students open this map.</li>
+            <li><strong>Initial Zoom:</strong> How close the map is zoomed in by default. <em>(15 is good for a neighborhood, 18 is good for a single park)</em>.</li>
+            <li><strong>Map Image:</strong> An optional cover photo that represents this area.</li>
+          </ul>
+        </div>
+      </GuideBox>
 
       <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
         <table className="w-full text-left text-sm">

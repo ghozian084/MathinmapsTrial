@@ -3,6 +3,7 @@ import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from 'fireb
 import { db } from '../../firebase';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import ImageUploader from '../../components/ImageUploader';
+import GuideBox from '../../components/GuideBox';
 
 interface Task {
   id: string;
@@ -104,6 +105,40 @@ export default function TasksManager() {
           Add New Task
         </button>
       </div>
+
+      <GuideBox title="How to Create a Task (Answer Types)">
+        <div className="space-y-4">
+          <p>Tasks are challenges students complete at a specific Map Point. The system automatically checks their answers using the <strong>Answer Key Regex</strong> field.</p>
+          
+          <div className="bg-white p-3 rounded border border-blue-100 shadow-sm">
+            <h4 className="font-bold text-blue-900 mb-1">1. Short Answer (Exact or Case-Insensitive)</h4>
+            <p className="mb-2">For simple word answers, use a basic regex. To make it case-insensitive (accepts "Apple", "apple", "APPLE"), add <code>(?i)</code> at the start.</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong>Input:</strong> <code>^(?i)apple$</code></li>
+              <li><strong>Effect:</strong> Accepts exactly the word "apple", ignoring uppercase/lowercase.</li>
+              <li><strong>Input:</strong> <code>^(?i)(apple|banana)$</code></li>
+              <li><strong>Effect:</strong> Accepts either "apple" OR "banana".</li>
+            </ul>
+          </div>
+
+          <div className="bg-white p-3 rounded border border-blue-100 shadow-sm">
+            <h4 className="font-bold text-blue-900 mb-1">2. Interval Answer (Number Ranges)</h4>
+            <p className="mb-2">If the answer is a number and you want to accept a range (e.g., between 10 and 15), you can use regex to match those digits.</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li><strong>Input:</strong> <code>^(1[0-5])$</code></li>
+              <li><strong>Effect:</strong> Accepts any number from 10 to 15 (10, 11, 12, 13, 14, 15).</li>
+              <li><strong>Input:</strong> <code>^(199[5-9]|200[0-5])$</code></li>
+              <li><strong>Effect:</strong> Accepts any year from 1995 to 2005.</li>
+            </ul>
+          </div>
+
+          <div className="bg-white p-3 rounded border border-blue-100 shadow-sm">
+            <h4 className="font-bold text-blue-900 mb-1">3. Feedback Logic</h4>
+            <p className="mb-1">You can provide custom feedback based on whether they got it right or wrong. Use this format:</p>
+            <code className="block bg-stone-100 p-2 rounded text-stone-800">IF MATCH THEN 'Great job!' ELSE 'Look closer at the statue.'</code>
+          </div>
+        </div>
+      </GuideBox>
 
       <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
         <table className="w-full text-left text-sm">

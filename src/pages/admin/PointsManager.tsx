@@ -4,6 +4,7 @@ import { db } from '../../firebase';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
 import LocationPickerMap from '../../components/LocationPickerMap';
 import ImageUploader from '../../components/ImageUploader';
+import GuideBox from '../../components/GuideBox';
 
 interface MapPoint {
   id: string;
@@ -90,7 +91,7 @@ export default function PointsManager() {
         <button
           onClick={() => {
             setEditingPoint(null);
-            setFormData({ mapId: maps[0]?.id || '', lat: 0, lng: 0, title: '', description: '', imageUrl: '', taskSetId: '' });
+            setFormData({ mapId: maps[0]?.id || '', lat: -6.200000, lng: 106.816666, title: '', description: '', imageUrl: '', taskSetId: '' });
             setIsModalOpen(true);
           }}
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
@@ -99,6 +100,19 @@ export default function PointsManager() {
           Add New Point
         </button>
       </div>
+
+      <GuideBox title="How to Create a Point">
+        <div className="space-y-3">
+          <p>A <strong>Point</strong> is a specific location marker on a Map where students will go to complete tasks (e.g., "The Old Oak Tree", "Statue of Liberty").</p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li><strong>Select Map:</strong> Choose which map this point belongs to.</li>
+            <li><strong>Title:</strong> The name of the location (e.g., <em>"Main Entrance"</em>).</li>
+            <li><strong>Point Location:</strong> Click on the interactive map to place the marker exactly where the student needs to go.</li>
+            <li><strong>Image:</strong> A photo of the location so students know what to look for when they arrive.</li>
+            <li><strong>Task Set ID:</strong> (Optional) Used to group specific tasks together if you have advanced logic. Usually left blank.</li>
+          </ul>
+        </div>
+      </GuideBox>
 
       <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
         <table className="w-full text-left text-sm">

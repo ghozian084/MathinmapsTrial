@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, where, addDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { X, CheckCircle, XCircle, HelpCircle, Lightbulb } from 'lucide-react';
+import { X, CheckCircle, XCircle, HelpCircle, Lightbulb, RotateCcw } from 'lucide-react';
 
 interface Task {
   id: string;
@@ -125,6 +125,24 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
     }
   };
 
+  const handleRetake = async (taskId: string) => {
+    const taskProgress = progress[taskId];
+    if (taskProgress && taskProgress.id) {
+      try {
+        await deleteDoc(doc(db, 'userProgress', taskProgress.id));
+        setProgress(prev => {
+          const newProg = { ...prev };
+          delete newProg[taskId];
+          return newProg;
+        });
+        setAnswers(prev => ({ ...prev, [taskId]: '' }));
+        setShowHint(prev => ({ ...prev, [taskId]: false }));
+      } catch (error) {
+        console.error('Error deleting progress:', error);
+      }
+    }
+  };
+
   if (!isOpen || !point) return null;
 
   return (
@@ -178,13 +196,22 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
                   <p className="text-stone-800 font-medium">{task.question}</p>
 
                   {isCompleted ? (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-emerald-900">Completed!</p>
-                        <p className="text-sm text-emerald-700 mt-1">Your answer: <span className="font-semibold">{taskProgress.userAnswer}</span></p>
-                        {taskProgress.feedback && <p className="text-sm text-emerald-600 mt-2 italic">{taskProgress.feedback}</p>}
+                    <div className="space-y-3">
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
+                        <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-emerald-900">Completed!</p>
+                          <p className="text-sm text-emerald-700 mt-1">Your answer: <span className="font-semibold">{taskProgress.userAnswer}</span></p>
+                          {taskProgress.feedback && <p className="text-sm text-emerald-600 mt-2 italic">{taskProgress.feedback}</p>}
+                        </div>
                       </div>
+                      <button
+                        onClick={() => handleRetake(task.id)}
+                        className="w-full flex items-center justify-center gap-2 py-2 bg-white border border-stone-300 text-stone-700 font-medium rounded-xl hover:bg-stone-50 transition-colors"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        Retake Task
+                      </button>
                     </div>
                   ) : (
                     <form onSubmit={(e) => handleSubmit(task.id, e)} className="space-y-3">
