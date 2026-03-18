@@ -226,7 +226,17 @@ export default function TasksManager() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">Answer Key Regex</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-stone-700">Answer Key Regex</label>
+                  </div>
+                  <div className="mb-3 bg-blue-50/50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800 space-y-2">
+                    <p><strong>How to write answers:</strong></p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li><strong>Exact word (case-insensitive):</strong> <code>^(?i)apple$</code> (Accepts "apple", "Apple", "APPLE")</li>
+                      <li><strong>Multiple choices:</strong> <code>^(?i)(apple|banana)$</code> (Accepts "apple" OR "banana")</li>
+                      <li><strong>Number range:</strong> <code>^(1[0-5])$</code> (Accepts 10, 11, 12, 13, 14, 15)</li>
+                    </ul>
+                  </div>
                   <input
                     type="text"
                     required

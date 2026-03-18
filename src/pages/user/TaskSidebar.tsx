@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { X, CheckCircle, XCircle, HelpCircle, Lightbulb, RotateCcw } from 'lucide-react';
@@ -126,20 +126,35 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
   };
 
   const handleRetake = async (taskId: string) => {
-    const taskProgress = progress[taskId];
-    if (taskProgress && taskProgress.id) {
-      try {
-        await deleteDoc(doc(db, 'userProgress', taskProgress.id));
-        setProgress(prev => {
-          const newProg = { ...prev };
-          delete newProg[taskId];
-          return newProg;
-        });
-        setAnswers(prev => ({ ...prev, [taskId]: '' }));
-        setShowHint(prev => ({ ...prev, [taskId]: false }));
-      } catch (error) {
-        console.error('Error deleting progress:', error);
-      }
+    if (!user || !point) return;
+    
+    try {
+      // Find all progress documents for this user and task
+      const q = query(
+        collection(db, 'userProgress'),
+        where('userId', '==', user.uid),
+        where('pointId', '==', point.id),
+        where('taskId', '==', taskId)
+      );
+      
+      const snapshot = await getDocs(q);
+      
+      // Delete all found documents
+      const deletePromises = snapshot.docs.map(docSnapshot => 
+        deleteDoc(doc(db, 'userProgress', docSnapshot.id))
+      );
+      
+      await Promise.all(deletePromises);
+
+      setProgress(prev => {
+        const newProg = { ...prev };
+        delete newProg[taskId];
+        return newProg;
+      });
+      setAnswers(prev => ({ ...prev, [taskId]: '' }));
+      setShowHint(prev => ({ ...prev, [taskId]: false }));
+    } catch (error) {
+      console.error('Error deleting progress:', error);
     }
   };
 

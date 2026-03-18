@@ -63,7 +63,7 @@ service cloud.firestore {
              data.lat is number && data.lng is number &&
              data.title is string && data.title.size() > 0 && data.title.size() < 100 &&
              (!('description' in data) || (data.description is string && data.description.size() < 1000)) &&
-             (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() < 500)) &&
+             (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() < 1000000)) &&
              (!('taskSetId' in data) || data.taskSetId is string);
     }
 
@@ -81,7 +81,7 @@ service cloud.firestore {
              data.answerKeyRegex is string && data.answerKeyRegex.size() > 0 && data.answerKeyRegex.size() < 500 &&
              (!('feedbackLogic' in data) || (data.feedbackLogic is string && data.feedbackLogic.size() < 2000)) &&
              (!('difficulty' in data) || data.difficulty in ['Easy', 'Medium', 'Hard']) &&
-             (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() < 500)) &&
+             (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() < 1000000)) &&
              (!('objectDescription' in data) || (data.objectDescription is string && data.objectDescription.size() < 1000)) &&
              (!('hintText' in data) || (data.hintText is string && data.hintText.size() < 1000));
     }
