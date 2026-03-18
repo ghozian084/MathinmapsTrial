@@ -1,0 +1,115 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application (Student or Admin)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Map": {
+      "title": "Map",
+      "description": "A map environment (e.g., Forest Discovery)",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "centerLat": { "type": "number" },
+        "centerLng": { "type": "number" },
+        "zoom": { "type": "number" }
+      },
+      "required": ["name", "centerLat", "centerLng", "zoom"]
+    },
+    "MapPoint": {
+      "title": "MapPoint",
+      "description": "A point of interest on a map",
+      "type": "object",
+      "properties": {
+        "mapId": { "type": "string" },
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "taskSetId": { "type": "string" }
+      },
+      "required": ["mapId", "lat", "lng", "title"]
+    },
+    "MapConnection": {
+      "title": "MapConnection",
+      "description": "A trail connecting two map points",
+      "type": "object",
+      "properties": {
+        "mapId": { "type": "string" },
+        "startPointId": { "type": "string" },
+        "endPointId": { "type": "string" },
+        "connectionType": { "type": "string", "enum": ["walking", "road", "water"] }
+      },
+      "required": ["mapId", "startPointId", "endPointId", "connectionType"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A learning task associated with a map point",
+      "type": "object",
+      "properties": {
+        "pointId": { "type": "string" },
+        "taskNumber": { "type": "number" },
+        "question": { "type": "string" },
+        "answerKeyRegex": { "type": "string" },
+        "feedbackLogic": { "type": "string" },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard"] },
+        "imageUrl": { "type": "string" },
+        "objectDescription": { "type": "string" },
+        "hintText": { "type": "string" }
+      },
+      "required": ["pointId", "taskNumber", "question", "answerKeyRegex"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "A user's progress on a specific task",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "pointId": { "type": "string" },
+        "taskId": { "type": "string" },
+        "userAnswer": { "type": "string" },
+        "isCorrect": { "type": "boolean" },
+        "feedback": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "pointId", "taskId", "userAnswer", "isCorrect", "timestamp"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles and roles"
+    },
+    "maps/{mapId}": {
+      "schema": { "$ref": "#/entities/Map" },
+      "description": "Available maps"
+    },
+    "mapPoints/{pointId}": {
+      "schema": { "$ref": "#/entities/MapPoint" },
+      "description": "Points of interest on maps"
+    },
+    "mapConnections/{connectionId}": {
+      "schema": { "$ref": "#/entities/MapConnection" },
+      "description": "Trails and connections between points"
+    },
+    "tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Tasks for map points"
+    },
+    "userProgress/{progressId}": {
+      "schema": { "$ref": "#/entities/UserProgress" },
+      "description": "User progress on tasks"
+    }
+  }
+}
