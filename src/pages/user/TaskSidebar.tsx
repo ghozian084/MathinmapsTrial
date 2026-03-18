@@ -90,7 +90,24 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
     // Simple Regex matching
     let isCorrect = false;
     try {
-      const regex = new RegExp(task.answerKeyRegex);
+      let regexStr = task.answerKeyRegex;
+      let flags = '';
+      
+      // Extract all inline flags like (?i), (?m), (?s)
+      const inlineFlagsMatches = [...regexStr.matchAll(/\(\?([ims]+)\)/g)];
+      for (const match of inlineFlagsMatches) {
+        flags += match[1];
+      }
+      regexStr = regexStr.replace(/\(\?[ims]+\)/g, '');
+
+      // Handle /pattern/flags format
+      const match = regexStr.match(/^\/(.*)\/([a-z]*)$/);
+      if (match) {
+        regexStr = match[1];
+        flags = Array.from(new Set((flags + match[2]).split(''))).join('');
+      }
+
+      const regex = new RegExp(regexStr, flags);
       isCorrect = regex.test(answer.trim());
     } catch (err) {
       console.error('Invalid regex in task:', err);
