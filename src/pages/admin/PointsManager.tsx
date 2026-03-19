@@ -20,6 +20,8 @@ interface MapPoint {
 interface MapData {
   id: string;
   name: string;
+  centerLat: number;
+  centerLng: number;
 }
 
 export default function PointsManager() {
@@ -42,7 +44,12 @@ export default function PointsManager() {
       setPoints(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as MapPoint)));
     });
     const unsubMaps = onSnapshot(collection(db, 'maps'), (snapshot) => {
-      setMaps(snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name } as MapData)));
+      setMaps(snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        name: doc.data().name,
+        centerLat: doc.data().centerLat || -6.200000,
+        centerLng: doc.data().centerLng || 106.816666
+      } as MapData)));
     });
     return () => { unsubPoints(); unsubMaps(); };
   }, []);
@@ -167,7 +174,20 @@ export default function PointsManager() {
                   <select
                     required
                     value={formData.mapId}
-                    onChange={(e) => setFormData({ ...formData, mapId: e.target.value })}
+                    onChange={(e) => {
+                      const selectedMapId = e.target.value;
+                      const selectedMap = maps.find(m => m.id === selectedMapId);
+                      if (selectedMap && !editingPoint) {
+                        setFormData({ 
+                          ...formData, 
+                          mapId: selectedMapId,
+                          lat: selectedMap.centerLat,
+                          lng: selectedMap.centerLng
+                        });
+                      } else {
+                        setFormData({ ...formData, mapId: selectedMapId });
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   >
                     <option value="" disabled>Select a map</option>

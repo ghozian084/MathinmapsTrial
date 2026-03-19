@@ -22,6 +22,7 @@ interface Task {
   hintText: string;
   hintText2: string;
   tools: string[];
+  creatorName?: string;
   type?: 'short_answer' | 'multiple_choice' | 'drag_drop' | 'interval';
   options?: string[];
   dragItems?: { id: string; content: string }[];
@@ -304,6 +305,9 @@ Do not reveal the exact answer if they are incorrect, but give a small hint or e
                 </div>
 
                 <div className="p-4 space-y-4">
+                  {task.creatorName && (
+                    <p className="text-[10px] text-stone-400 font-medium uppercase tracking-wider">Created by: {task.creatorName}</p>
+                  )}
                   {task.imageUrl && (
                     <img src={task.imageUrl} alt={`Task ${task.taskNumber}`} className="w-full h-40 object-cover rounded-xl" />
                   )}
