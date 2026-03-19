@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { X, CheckCircle, XCircle, HelpCircle, Lightbulb, RotateCcw, Loader2 } from 'lucide-react';
+import { X, CheckCircle, XCircle, HelpCircle, Lightbulb, RotateCcw, Loader2, GripVertical, ChevronRight } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
+import { motion, Reorder, AnimatePresence } from 'motion/react';
+import stringSimilarity from 'string-similarity';
 
 interface Task {
   id: string;
@@ -16,6 +18,10 @@ interface Task {
   imageUrl: string;
   objectDescription: string;
   hintText: string;
+  type?: 'short_answer' | 'multiple_choice' | 'drag_drop';
+  options?: string[];
+  dragItems?: { id: string; content: string }[];
+  dropTargets?: { id: string; label: string; correctItemId: string }[];
 }
 
 interface UserProgress {
@@ -43,6 +49,7 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showHint, setShowHint] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState<Record<string, boolean>>({});
+  const [selectedItem, setSelectedItem] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!point || !isOpen) return;
@@ -87,30 +94,68 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
 
     setIsSubmitting(prev => ({ ...prev, [taskId]: true }));
 
-    // Simple Regex matching
     let isCorrect = false;
-    try {
-      let regexStr = task.answerKeyRegex;
-      let flags = '';
-      
-      // Extract all inline flags like (?i), (?m), (?s)
-      const inlineFlagsMatches = [...regexStr.matchAll(/\(\?([ims]+)\)/g)];
-      for (const match of inlineFlagsMatches) {
-        flags += match[1];
-      }
-      regexStr = regexStr.replace(/\(\?[ims]+\)/g, '');
+    const taskType = task.type || 'short_answer';
 
-      // Handle /pattern/flags format
-      const match = regexStr.match(/^\/(.*)\/([a-z]*)$/);
-      if (match) {
-        regexStr = match[1];
-        flags = Array.from(new Set((flags + match[2]).split(''))).join('');
-      }
+    if (taskType === 'short_answer') {
+      try {
+        let regexStr = task.answerKeyRegex;
+        let flags = '';
+        
+        // Extract all inline flags like (?i), (?m), (?s)
+        const inlineFlagsMatches = [...regexStr.matchAll(/\(\?([ims]+)\)/g)];
+        for (const match of inlineFlagsMatches) {
+          flags += match[1];
+        }
+        regexStr = regexStr.replace(/\(\?[ims]+\)/g, '');
 
-      const regex = new RegExp(regexStr, flags);
-      isCorrect = regex.test(answer.trim());
-    } catch (err) {
-      console.error('Invalid regex in task:', err);
+        // Handle /pattern/flags format
+        const match = regexStr.match(/^\/(.*)\/([a-z]*)$/);
+        if (match) {
+          regexStr = match[1];
+          flags = Array.from(new Set((flags + match[2]).split(''))).join('');
+        }
+
+        const regex = new RegExp(regexStr, flags);
+        isCorrect = regex.test(answer.trim());
+
+        // Typo tolerance fallback if not exactly matched by regex
+        if (!isCorrect) {
+          // Extract plain text from regex if possible, or just use the regex string if it's simple
+          // For now, let's assume the user might have provided a simple string in the regex field too
+          // Or we can check similarity against common answers if we had them.
+          // Since we only have answerKeyRegex, let's try to see if it's a simple string
+          const simpleString = task.answerKeyRegex.replace(/^\/|\/[a-z]*$/g, '').replace(/\\/g, '');
+          const similarity = stringSimilarity.compareTwoStrings(answer.trim().toLowerCase(), simpleString.toLowerCase());
+          if (similarity > 0.8) {
+            isCorrect = true;
+          }
+        }
+      } catch (err) {
+        console.error('Invalid regex in task:', err);
+      }
+    } else if (taskType === 'multiple_choice') {
+      // Multiple choice usually matches exactly one of the options or a specific key
+      // If answerKeyRegex is provided, use it, otherwise match exactly
+      if (task.answerKeyRegex) {
+        try {
+          const regex = new RegExp(task.answerKeyRegex.replace(/^\/|\/[a-z]*$/g, ''), 'i');
+          isCorrect = regex.test(answer.trim());
+        } catch (e) {
+          isCorrect = answer.trim() === task.answerKeyRegex;
+        }
+      } else {
+        // Fallback: if no regex, we might need a correctOption field, but let's assume answerKeyRegex holds the correct value
+        isCorrect = false;
+      }
+    } else if (taskType === 'drag_drop') {
+      // For drag_drop, answer is expected to be a JSON string of { targetId: itemId }
+      try {
+        const mapping = JSON.parse(answer);
+        isCorrect = task.dropTargets?.every(target => mapping[target.id] === target.correctItemId) ?? false;
+      } catch (e) {
+        isCorrect = false;
+      }
     }
 
     let feedbackMsg = isCorrect ? 'Correct! Well done.' : 'Incorrect. Try again.';
@@ -260,7 +305,11 @@ Provide a short, constructive, and encouraging feedback message (max 2 sentences
                         <CheckCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                         <div>
                           <p className="text-sm font-medium text-blue-900">Completed!</p>
-                          <p className="text-sm text-blue-700 mt-1">Your answer: <span className="font-semibold">{taskProgress.userAnswer}</span></p>
+                          {task.type === 'drag_drop' ? (
+                            <p className="text-sm text-blue-700 mt-1">Successfully matched all items!</p>
+                          ) : (
+                            <p className="text-sm text-blue-700 mt-1">Your answer: <span className="font-semibold">{taskProgress.userAnswer}</span></p>
+                          )}
                           {taskProgress.feedback && <p className="text-sm text-blue-600 mt-2 italic">{taskProgress.feedback}</p>}
                         </div>
                       </div>
@@ -273,14 +322,120 @@ Provide a short, constructive, and encouraging feedback message (max 2 sentences
                       </button>
                     </div>
                   ) : (
-                    <form onSubmit={(e) => handleSubmit(task.id, e)} className="space-y-3">
-                      <input
-                        type="text"
-                        placeholder="Your answer..."
-                        value={answers[task.id] || ''}
-                        onChange={(e) => setAnswers(prev => ({ ...prev, [task.id]: e.target.value }))}
-                        className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                      />
+                    <form onSubmit={(e) => handleSubmit(task.id, e)} className="space-y-4">
+                      {/* Task Content based on Type */}
+                      {(!task.type || task.type === 'short_answer') && (
+                        <input
+                          type="text"
+                          placeholder="Your answer..."
+                          value={answers[task.id] || ''}
+                          onChange={(e) => setAnswers(prev => ({ ...prev, [task.id]: e.target.value }))}
+                          className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                        />
+                      )}
+
+                      {task.type === 'multiple_choice' && (
+                        <div className="space-y-2">
+                          {task.options?.map((option, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => setAnswers(prev => ({ ...prev, [task.id]: option }))}
+                              className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                                answers[task.id] === option
+                                  ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                                  : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {task.type === 'drag_drop' && (
+                        <div className="space-y-4">
+                          <div className="bg-stone-50 rounded-xl p-3 border border-stone-200">
+                            <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-2">Items to match</p>
+                            <div className="flex flex-wrap gap-2">
+                              {task.dragItems?.map(item => {
+                                // Check if this item is already placed
+                                const currentMapping = JSON.parse(answers[task.id] || '{}');
+                                const isPlaced = Object.values(currentMapping).includes(item.id);
+                                
+                                return (
+                                  <motion.div
+                                    key={item.id}
+                                    layoutId={`${task.id}-${item.id}`}
+                                    className={`px-3 py-2 rounded-lg border text-sm cursor-pointer transition-all ${
+                                      isPlaced 
+                                        ? 'bg-stone-200 border-stone-300 text-stone-400 opacity-50' 
+                                        : 'bg-white border-stone-200 text-stone-700 shadow-sm hover:border-blue-300'
+                                    }`}
+                                    onClick={() => {
+                                      if (!isPlaced) {
+                                        setSelectedItem(prev => ({ ...prev, [task.id]: item.id }));
+                                      }
+                                    }}
+                                  >
+                                    {item.content}
+                                    {selectedItem[task.id] === item.id && (
+                                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white shadow-sm" />
+                                    )}
+                                  </motion.div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            {task.dropTargets?.map(target => {
+                              const currentMapping = JSON.parse(answers[task.id] || '{}');
+                              const matchedItemId = currentMapping[target.id];
+                              const matchedItem = task.dragItems?.find(i => i.id === matchedItemId);
+
+                              return (
+                                <div key={target.id} className="flex items-center gap-3">
+                                  <div className="flex-1 p-3 bg-stone-100 border border-stone-200 rounded-xl text-sm font-medium text-stone-600">
+                                    {target.label}
+                                  </div>
+                                  <div className="w-8 flex justify-center text-stone-300">
+                                    <ChevronRight className="w-5 h-5" />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const selectedId = selectedItem[task.id];
+                                      if (selectedId) {
+                                        const newMapping = { ...currentMapping, [target.id]: selectedId };
+                                        setAnswers(prev => ({ ...prev, [task.id]: JSON.stringify(newMapping) }));
+                                        setSelectedItem(prev => {
+                                          const next = { ...prev };
+                                          delete next[task.id];
+                                          return next;
+                                        });
+                                      } else if (matchedItemId) {
+                                        // Remove mapping
+                                        const newMapping = { ...currentMapping };
+                                        delete newMapping[target.id];
+                                        setAnswers(prev => ({ ...prev, [task.id]: JSON.stringify(newMapping) }));
+                                      }
+                                    }}
+                                    className={`flex-1 p-3 rounded-xl border-2 border-dashed transition-all min-h-[46px] flex items-center justify-center text-sm ${
+                                      matchedItem
+                                        ? 'bg-blue-50 border-blue-200 text-blue-700 border-solid'
+                                        : 'bg-stone-50 border-stone-200 text-stone-400 hover:bg-stone-100'
+                                    }`}
+                                  >
+                                    {matchedItem ? matchedItem.content : 'Click to place'}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <p className="text-[10px] text-stone-400 italic">Click an item above, then click a target box to match them.</p>
+                        </div>
+                      )}
                       
                       <div className="flex items-center gap-2">
                         <button

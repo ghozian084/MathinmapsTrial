@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserMap from './pages/user/UserMap';
+import MapSelection from './pages/user/MapSelection';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode; requiredRole?: 'admin' | 'user' }> = ({ children, requiredRole }) => {
   const { user, profile, loading } = useAuth();
@@ -13,7 +14,7 @@ const PrivateRoute: React.FC<{ children: React.ReactNode; requiredRole?: 'admin'
   if (!user || !profile) return <Navigate to="/login" />;
 
   if (requiredRole && profile.role !== requiredRole) {
-    return <Navigate to={profile.role === 'admin' ? '/admin/dashboard' : '/map/Map 1'} />;
+    return <Navigate to={profile.role === 'admin' ? '/admin/dashboard' : '/map-selection'} />;
   }
 
   return <>{children}</>;
@@ -30,6 +31,14 @@ export default function App() {
             element={
               <PrivateRoute requiredRole="admin">
                 <AdminDashboard />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/map-selection" 
+            element={
+              <PrivateRoute requiredRole="user">
+                <MapSelection />
               </PrivateRoute>
             } 
           />
