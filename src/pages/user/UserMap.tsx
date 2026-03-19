@@ -6,8 +6,9 @@ import L from 'leaflet';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Menu, Map as MapIcon } from 'lucide-react';
+import { LogOut, Menu, Map as MapIcon, ChevronDown } from 'lucide-react';
 import TaskSidebar from './TaskSidebar';
+import MapMenu from '../../components/MapMenu';
 
 // Fix Leaflet's default icon path issues
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -80,6 +81,7 @@ export default function UserMap() {
   const [connections, setConnections] = useState<MapConnection[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<MapPoint | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMapMenuOpen, setIsMapMenuOpen] = useState(false);
   const [completedPoints, setCompletedPoints] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -150,13 +152,17 @@ export default function UserMap() {
             <h1 className="text-xl font-bold text-stone-900">Mathinmaps</h1>
           </div>
           <div className="h-6 w-px bg-stone-300 mx-2"></div>
-          <select
-            value={currentMap.name}
-            onChange={(e) => navigate(`/map/${e.target.value}`)}
-            className="bg-stone-50 border border-stone-200 text-stone-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none"
+          
+          <button
+            onClick={() => setIsMapMenuOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl hover:bg-stone-100 hover:border-blue-300 transition-all duration-200 group"
           >
-            {maps.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
-          </select>
+            <Menu className="w-4 h-4 text-stone-500 group-hover:text-blue-600" />
+            <span className="text-sm font-semibold text-stone-700 group-hover:text-blue-900">
+              {currentMap.name}
+            </span>
+            <ChevronDown className="w-4 h-4 text-stone-400 group-hover:text-blue-500" />
+          </button>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium text-stone-700 hidden sm:block">
@@ -240,6 +246,15 @@ export default function UserMap() {
           onClose={() => setIsSidebarOpen(false)}
           point={selectedPoint}
           mapName={currentMap.name}
+        />
+
+        {/* Map Menu */}
+        <MapMenu
+          isOpen={isMapMenuOpen}
+          onClose={() => setIsMapMenuOpen(false)}
+          maps={maps}
+          currentMapName={currentMap.name}
+          onSelectMap={(mapName) => navigate(`/map/${mapName}`)}
         />
       </div>
     </div>
