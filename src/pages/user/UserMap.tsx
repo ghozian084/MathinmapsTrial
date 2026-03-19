@@ -6,9 +6,8 @@ import L from 'leaflet';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Menu, Map as MapIcon, ChevronDown } from 'lucide-react';
+import { LogOut, Map as MapIcon, ChevronLeft } from 'lucide-react';
 import TaskSidebar from './TaskSidebar';
-import MapMenu from '../../components/MapMenu';
 
 // Fix Leaflet's default icon path issues
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -81,7 +80,6 @@ export default function UserMap() {
   const [connections, setConnections] = useState<MapConnection[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<MapPoint | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMapMenuOpen, setIsMapMenuOpen] = useState(false);
   const [completedPoints, setCompletedPoints] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -154,14 +152,13 @@ export default function UserMap() {
           <div className="h-6 w-px bg-stone-300 mx-2"></div>
           
           <button
-            onClick={() => setIsMapMenuOpen(true)}
+            onClick={() => navigate('/map-selection')}
             className="flex items-center gap-2 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl hover:bg-stone-100 hover:border-blue-300 transition-all duration-200 group"
           >
-            <Menu className="w-4 h-4 text-stone-500 group-hover:text-blue-600" />
+            <ChevronLeft className="w-4 h-4 text-stone-500 group-hover:text-blue-600" />
             <span className="text-sm font-semibold text-stone-700 group-hover:text-blue-900">
-              {currentMap.name}
+              Change Map
             </span>
-            <ChevronDown className="w-4 h-4 text-stone-400 group-hover:text-blue-500" />
           </button>
         </div>
         <div className="flex items-center gap-4">
@@ -246,15 +243,6 @@ export default function UserMap() {
           onClose={() => setIsSidebarOpen(false)}
           point={selectedPoint}
           mapName={currentMap.name}
-        />
-
-        {/* Map Menu */}
-        <MapMenu
-          isOpen={isMapMenuOpen}
-          onClose={() => setIsMapMenuOpen(false)}
-          maps={maps}
-          currentMapName={currentMap.name}
-          onSelectMap={(mapName) => navigate(`/map/${mapName}`)}
         />
       </div>
     </div>
