@@ -62,8 +62,10 @@
         "pointId": { "type": "string" },
         "taskNumber": { "type": "number" },
         "question": { "type": "string" },
-        "type": { "type": "string", "enum": ["short_answer", "multiple_choice", "drag_drop"] },
+        "type": { "type": "string", "enum": ["short_answer", "multiple_choice", "drag_drop", "interval"] },
         "answerKeyRegex": { "type": "string" },
+        "minAnswer": { "type": "number" },
+        "maxAnswer": { "type": "number" },
         "options": { "type": "array", "items": { "type": "string" } },
         "dragItems": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "content": { "type": "string" } } } },
         "dropTargets": { "type": "array", "items": { "type": "object", "properties": { "id": { "type": "string" }, "label": { "type": "string" }, "correctItemId": { "type": "string" } } } },
@@ -71,9 +73,13 @@
         "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard"] },
         "imageUrl": { "type": "string" },
         "objectDescription": { "type": "string" },
-        "hintText": { "type": "string" }
+        "hintText": { "type": "string" },
+        "hintText2": { "type": "string" },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" }
       },
-      "required": ["pointId", "taskNumber", "question"]
+      "required": ["pointId", "taskNumber", "question", "creatorId"]
     },
     "UserProgress": {
       "title": "UserProgress",

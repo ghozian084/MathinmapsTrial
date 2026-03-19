@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { Map as MapIcon, ChevronRight, LogOut, Search } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Map as MapIcon, ChevronRight, LogOut, Search, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface MapData {
   id: string;
@@ -17,6 +17,7 @@ export default function MapSelection() {
   const [maps, setMaps] = useState<MapData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedMap, setSelectedMap] = useState<MapData | null>(null);
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
 
@@ -91,7 +92,7 @@ export default function MapSelection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              onClick={() => navigate(`/map/${map.name}`)}
+              onClick={() => setSelectedMap(map)}
               className="group bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col"
             >
               <div className="aspect-video relative overflow-hidden">
@@ -103,7 +104,7 @@ export default function MapSelection() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
                   <span className="text-white font-medium flex items-center gap-2">
-                    Buka Peta <ChevronRight className="w-4 h-4" />
+                    Lihat Detail <ChevronRight className="w-4 h-4" />
                   </span>
                 </div>
               </div>
@@ -135,6 +136,61 @@ export default function MapSelection() {
           </div>
         )}
       </main>
+
+      {/* Map Preview Modal */}
+      <AnimatePresence>
+        {selectedMap && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-[2rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col"
+            >
+              <div className="relative aspect-video">
+                <img
+                  src={selectedMap.imageUrl || `https://picsum.photos/seed/${selectedMap.name}/800/450`}
+                  alt={selectedMap.name}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <button
+                  onClick={() => setSelectedMap(null)}
+                  className="absolute top-4 right-4 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full backdrop-blur-md transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-8 md:p-10">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-blue-50 rounded-xl">
+                    <MapIcon className="text-blue-600 w-6 h-6" />
+                  </div>
+                  <h3 className="text-3xl font-bold text-stone-900">{selectedMap.name}</h3>
+                </div>
+                <p className="text-stone-600 text-lg leading-relaxed mb-8">
+                  {selectedMap.description}
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button
+                    onClick={() => navigate(`/map/${selectedMap.name}`)}
+                    className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 group"
+                  >
+                    Mulai Petualangan
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                  <button
+                    onClick={() => setSelectedMap(null)}
+                    className="px-8 py-4 bg-stone-100 text-stone-600 font-bold rounded-2xl hover:bg-stone-200 transition-colors"
+                  >
+                    Kembali
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

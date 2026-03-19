@@ -44,7 +44,7 @@ export default function Monitoring() {
         user?.displayName || 'Unknown',
         user?.email || 'Unknown',
         p.taskId,
-        `"${p.userAnswer.replace(/"/g, '""')}"`,
+        (p.userAnswer || '').replace(/"/g, '""'),
         p.isCorrect ? 'Yes' : 'No'
       ].join(',');
     });

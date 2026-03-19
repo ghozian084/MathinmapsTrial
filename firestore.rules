@@ -77,13 +77,23 @@ service cloud.firestore {
     function isValidTask(data) {
       return data.pointId is string && data.pointId.size() > 0 &&
              data.taskNumber is number &&
-             data.question is string && data.question.size() > 0 && data.question.size() < 1000 &&
-             data.answerKeyRegex is string && data.answerKeyRegex.size() > 0 && data.answerKeyRegex.size() < 500 &&
-             (!('feedbackLogic' in data) || (data.feedbackLogic is string && data.feedbackLogic.size() < 2000)) &&
+             data.question is string && data.question.size() > 0 && data.question.size() < 2000 &&
+             data.type in ['short_answer', 'multiple_choice', 'drag_drop', 'interval'] &&
+             (!('answerKeyRegex' in data) || (data.answerKeyRegex is string && data.answerKeyRegex.size() < 1000)) &&
+             (!('minAnswer' in data) || data.minAnswer is number) &&
+             (!('maxAnswer' in data) || data.maxAnswer is number) &&
+             (!('feedbackLogic' in data) || (data.feedbackLogic is string && data.feedbackLogic.size() < 5000)) &&
              (!('difficulty' in data) || data.difficulty in ['Easy', 'Medium', 'Hard']) &&
              (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() < 1000000)) &&
-             (!('objectDescription' in data) || (data.objectDescription is string && data.objectDescription.size() < 1000)) &&
-             (!('hintText' in data) || (data.hintText is string && data.hintText.size() < 1000));
+             (!('objectDescription' in data) || (data.objectDescription is string && data.objectDescription.size() < 2000)) &&
+             (!('hintText' in data) || (data.hintText is string && data.hintText.size() < 2000)) &&
+             (!('hintText2' in data) || (data.hintText2 is string && data.hintText2.size() < 2000)) &&
+             (!('tools' in data) || (data.tools is list && data.tools.size() <= 20)) &&
+             data.creatorId is string &&
+             (!('creatorName' in data) || data.creatorName is string) &&
+             (!('options' in data) || (data.options is list && data.options.size() <= 10)) &&
+             (!('dragItems' in data) || (data.dragItems is list && data.dragItems.size() <= 10)) &&
+             (!('dropTargets' in data) || (data.dropTargets is list && data.dropTargets.size() <= 10));
     }
 
     function isValidUserProgress(data) {

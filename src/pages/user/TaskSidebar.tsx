@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { X, CheckCircle, XCircle, HelpCircle, Lightbulb, RotateCcw, Loader2, GripVertical, ChevronRight } from 'lucide-react';
+import { X, CheckCircle, XCircle, HelpCircle, Lightbulb, RotateCcw, Loader2, GripVertical, ChevronRight, Wrench } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import { motion, Reorder, AnimatePresence } from 'motion/react';
 import stringSimilarity from 'string-similarity';
@@ -13,12 +13,16 @@ interface Task {
   taskNumber: number;
   question: string;
   answerKeyRegex: string;
+  minAnswer?: number;
+  maxAnswer?: number;
   feedbackLogic: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   imageUrl: string;
   objectDescription: string;
   hintText: string;
-  type?: 'short_answer' | 'multiple_choice' | 'drag_drop';
+  hintText2: string;
+  tools: string[];
+  type?: 'short_answer' | 'multiple_choice' | 'drag_drop' | 'interval';
   options?: string[];
   dragItems?: { id: string; content: string }[];
   dropTargets?: { id: string; label: string; correctItemId: string }[];
@@ -98,55 +102,54 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
     const taskType = task.type || 'short_answer';
 
     if (taskType === 'short_answer') {
-      try {
-        let regexStr = task.answerKeyRegex;
-        let flags = '';
-        
-        // Extract all inline flags like (?i), (?m), (?s)
-        const inlineFlagsMatches = [...regexStr.matchAll(/\(\?([ims]+)\)/g)];
-        for (const match of inlineFlagsMatches) {
-          flags += match[1];
-        }
-        regexStr = regexStr.replace(/\(\?[ims]+\)/g, '');
+      const studentAnswer = answer.trim().toLowerCase();
+      const correctAnswers = (task.answerKeyRegex || '').split(';').map(a => a.trim().toLowerCase());
+      
+      // Check for exact match first (case-insensitive)
+      isCorrect = correctAnswers.some(correct => studentAnswer === correct);
 
-        // Handle /pattern/flags format
-        const match = regexStr.match(/^\/(.*)\/([a-z]*)$/);
-        if (match) {
-          regexStr = match[1];
-          flags = Array.from(new Set((flags + match[2]).split(''))).join('');
-        }
-
-        const regex = new RegExp(regexStr, flags);
-        isCorrect = regex.test(answer.trim());
-
-        // Typo tolerance fallback if not exactly matched by regex
-        if (!isCorrect) {
-          // Extract plain text from regex if possible, or just use the regex string if it's simple
-          // For now, let's assume the user might have provided a simple string in the regex field too
-          // Or we can check similarity against common answers if we had them.
-          // Since we only have answerKeyRegex, let's try to see if it's a simple string
-          const simpleString = task.answerKeyRegex.replace(/^\/|\/[a-z]*$/g, '').replace(/\\/g, '');
-          const similarity = stringSimilarity.compareTwoStrings(answer.trim().toLowerCase(), simpleString.toLowerCase());
-          if (similarity > 0.8) {
-            isCorrect = true;
-          }
-        }
-      } catch (err) {
-        console.error('Invalid regex in task:', err);
+      // If not exact, try fuzzy matching for each possible correct answer
+      if (!isCorrect) {
+        isCorrect = correctAnswers.some(correct => {
+          const similarity = stringSimilarity.compareTwoStrings(studentAnswer, correct);
+          return similarity > 0.85; // 85% similarity threshold for typos
+        });
       }
-    } else if (taskType === 'multiple_choice') {
-      // Multiple choice usually matches exactly one of the options or a specific key
-      // If answerKeyRegex is provided, use it, otherwise match exactly
-      if (task.answerKeyRegex) {
+
+      // Legacy Regex Fallback (in case some tasks still use it)
+      if (!isCorrect && (task.answerKeyRegex.includes('/') || task.answerKeyRegex.includes('('))) {
         try {
-          const regex = new RegExp(task.answerKeyRegex.replace(/^\/|\/[a-z]*$/g, ''), 'i');
+          let regexStr = task.answerKeyRegex;
+          let flags = 'i'; // Default to case-insensitive
+          
+          const match = regexStr.match(/^\/(.*)\/([a-z]*)$/);
+          if (match) {
+            regexStr = match[1];
+            flags = match[2] || 'i';
+          }
+          const regex = new RegExp(regexStr, flags);
           isCorrect = regex.test(answer.trim());
         } catch (e) {
-          isCorrect = answer.trim() === task.answerKeyRegex;
+          // Ignore regex errors
+        }
+      }
+    } else if (taskType === 'multiple_choice') {
+      const studentAnswer = answer.trim().toLowerCase();
+      const correctKey = (task.answerKeyRegex || '').trim().toLowerCase();
+      
+      if (correctKey.startsWith('/') && correctKey.includes('/', 1)) {
+        try {
+          const match = correctKey.match(/^\/(.*)\/([a-z]*)$/);
+          const regexStr = match ? match[1] : correctKey.replace(/^\/|\/$/g, '');
+          const flags = (match && match[2]) ? match[2] : 'i';
+          const regex = new RegExp(regexStr, flags);
+          isCorrect = regex.test(answer.trim());
+        } catch (e) {
+          isCorrect = studentAnswer === correctKey;
         }
       } else {
-        // Fallback: if no regex, we might need a correctOption field, but let's assume answerKeyRegex holds the correct value
-        isCorrect = false;
+        // Exact match (case-insensitive)
+        isCorrect = studentAnswer === correctKey;
       }
     } else if (taskType === 'drag_drop') {
       // For drag_drop, answer is expected to be a JSON string of { targetId: itemId }
@@ -156,6 +159,15 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
       } catch (e) {
         isCorrect = false;
       }
+    } else if (taskType === 'interval') {
+      const studentAnswer = parseFloat(answer);
+      if (!isNaN(studentAnswer)) {
+        const min = task.minAnswer ?? -Infinity;
+        const max = task.maxAnswer ?? Infinity;
+        isCorrect = studentAnswer >= min && studentAnswer <= max;
+      } else {
+        isCorrect = false;
+      }
     }
 
     let feedbackMsg = isCorrect ? 'Correct! Well done.' : 'Incorrect. Try again.';
@@ -163,11 +175,14 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
     try {
       if (process.env.GEMINI_API_KEY) {
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-        const prompt = `You are a helpful math tutor. The student is answering a question: "${task.question}". 
-The correct answer format is defined by the regex: "${task.answerKeyRegex}".
+        const prompt = `You are a helpful math tutor. 
+Context/Logic to follow: ${task.feedbackLogic || 'Provide constructive, encouraging feedback without revealing the answer.'}
+The student is answering: "${task.question}". 
+The correct answer is: "${task.answerKeyRegex}".
 The student answered: "${answer}".
 The student's answer is evaluated as ${isCorrect ? 'CORRECT' : 'INCORRECT'}.
-Provide a short, constructive, and encouraging feedback message (max 2 sentences). Do not reveal the exact answer if they are incorrect, but give a small hint or encouragement.`;
+Provide a short, constructive, and encouraging feedback message (max 2 sentences). 
+Do not reveal the exact answer if they are incorrect, but give a small hint or encouragement based on the context provided.`;
         
         const response = await ai.models.generateContent({
           model: "gemini-3-flash-preview",
@@ -298,6 +313,21 @@ Provide a short, constructive, and encouraging feedback message (max 2 sentences
                   )}
 
                   <p className="text-stone-800 font-medium">{task.question}</p>
+
+                  {task.tools && task.tools.length > 0 && (
+                    <div className="bg-stone-50 border border-stone-200 rounded-xl p-3">
+                      <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                        <Wrench className="w-3 h-3" /> Tools Needed
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {task.tools.map((tool, i) => (
+                          <span key={i} className="px-2 py-0.5 bg-white border border-stone-200 rounded-md text-[11px] text-stone-600 font-medium">
+                            {tool}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {isCompleted ? (
                     <div className="space-y-3">
@@ -436,6 +466,20 @@ Provide a short, constructive, and encouraging feedback message (max 2 sentences
                           <p className="text-[10px] text-stone-400 italic">Click an item above, then click a target box to match them.</p>
                         </div>
                       )}
+
+                      {task.type === 'interval' && (
+                        <div className="space-y-2">
+                          <input
+                            type="number"
+                            step="any"
+                            placeholder="Enter numerical value..."
+                            value={answers[task.id] || ''}
+                            onChange={(e) => setAnswers(prev => ({ ...prev, [task.id]: e.target.value }))}
+                            className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                          />
+                          <p className="text-[10px] text-stone-400 italic">Enter your measurement or calculated value.</p>
+                        </div>
+                      )}
                       
                       <div className="flex items-center gap-2">
                         <button
@@ -445,7 +489,7 @@ Provide a short, constructive, and encouraging feedback message (max 2 sentences
                         >
                           {isSubmitting[task.id] ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Answer'}
                         </button>
-                        {task.hintText && (
+                        {(task.hintText || task.hintText2) && (
                           <button
                             type="button"
                             onClick={() => setShowHint(prev => ({ ...prev, [task.id]: !prev[task.id] }))}
@@ -457,9 +501,18 @@ Provide a short, constructive, and encouraging feedback message (max 2 sentences
                         )}
                       </div>
 
-                      {showHint[task.id] && task.hintText && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
-                          <span className="font-semibold">Hint:</span> {task.hintText}
+                      {showHint[task.id] && (
+                        <div className="space-y-2">
+                          {task.hintText && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
+                              <span className="font-semibold">Hint 1:</span> {task.hintText}
+                            </div>
+                          )}
+                          {task.hintText2 && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800">
+                              <span className="font-semibold">Hint 2:</span> {task.hintText2}
+                            </div>
+                          )}
                         </div>
                       )}
 
