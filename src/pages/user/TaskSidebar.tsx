@@ -177,13 +177,19 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
       if (process.env.GEMINI_API_KEY) {
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         const prompt = `You are a helpful math tutor. 
-Context/Logic to follow: ${task.feedbackLogic || 'Provide constructive, encouraging feedback without revealing the answer.'}
+Context/Logic to follow: ${task.feedbackLogic || 'Provide constructive, encouraging feedback.'}
 The student is answering: "${task.question}". 
 The correct answer is: "${task.answerKeyRegex}".
 The student answered: "${answer}".
 The student's answer is evaluated as ${isCorrect ? 'CORRECT' : 'INCORRECT'}.
-Provide a short, constructive, and encouraging feedback message (max 2 sentences). 
-Do not reveal the exact answer if they are incorrect, but give a small hint or encouragement based on the context provided.`;
+
+If the answer is CORRECT:
+Provide a discussion explaining *why* the answer is correct and the math concept behind it.
+
+If the answer is INCORRECT:
+Provide a discussion explaining the concept, pointing out where they might have gone wrong, and giving a clear hint to guide them to the correct answer. Do not just say "Wrong", explain the reasoning.
+
+Keep the tone encouraging and educational. Format with clear paragraphs.`;
         
         const response = await ai.models.generateContent({
           model: "gemini-3-flash-preview",
@@ -344,7 +350,7 @@ Do not reveal the exact answer if they are incorrect, but give a small hint or e
                           ) : (
                             <p className="text-sm text-blue-700 mt-1">Your answer: <span className="font-semibold">{taskProgress.userAnswer}</span></p>
                           )}
-                          {taskProgress.feedback && <p className="text-sm text-blue-600 mt-2 italic">{taskProgress.feedback}</p>}
+                          {taskProgress.feedback && <div className="text-sm text-blue-600 mt-2 italic whitespace-pre-wrap">{taskProgress.feedback}</div>}
                         </div>
                       </div>
                       <button
@@ -525,7 +531,7 @@ Do not reveal the exact answer if they are incorrect, but give a small hint or e
                           <XCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                           <div>
                             <p className="font-medium">Incorrect</p>
-                            {taskProgress.feedback && <p className="mt-1 opacity-90">{taskProgress.feedback}</p>}
+                            {taskProgress.feedback && <div className="mt-1 opacity-90 whitespace-pre-wrap">{taskProgress.feedback}</div>}
                           </div>
                         </div>
                       )}
