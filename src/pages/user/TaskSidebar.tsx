@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, where, addDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, deleteDoc, doc, getDocs, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { X, CheckCircle, XCircle, HelpCircle, Lightbulb, RotateCcw, Loader2, GripVertical, ChevronRight, Wrench } from 'lucide-react';
@@ -38,6 +38,8 @@ interface UserProgress {
   isCorrect: boolean;
   feedback: string;
   timestamp: string;
+  attempts?: number;
+  score?: number;
 }
 
 interface TaskSidebarProps {
@@ -231,14 +233,28 @@ Keep the tone encouraging and educational. Format with clear paragraphs.`;
     }
 
     try {
-      await addDoc(collection(db, 'userProgress'), {
+      const progRef = doc(db, 'userProgress', `${user.uid}_${taskId}`);
+      const progSnap = await getDoc(progRef);
+      
+      let attempts = 1;
+      
+      if (progSnap.exists()) {
+        const existingData = progSnap.data();
+        attempts = (existingData.attempts || 0) + 1;
+      }
+      
+      const score = Math.max(0, 100 - ((attempts - 1) * 10));
+
+      await setDoc(progRef, {
         userId: user.uid,
         pointId: point.id,
         taskId: taskId,
         userAnswer: answer,
         isCorrect,
         feedback: feedbackMsg,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        attempts,
+        score: isCorrect ? score : 0
       });
       
       // Clear answer input if correct
@@ -360,7 +376,7 @@ Keep the tone encouraging and educational. Format with clear paragraphs.`;
 
                   {isCompleted ? (
                     <div className="space-y-3">
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3 relative">
                         <CheckCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                         <div>
                           <p className="text-sm font-medium text-blue-900">Completed!</p>
@@ -371,6 +387,11 @@ Keep the tone encouraging and educational. Format with clear paragraphs.`;
                           )}
                           {taskProgress.feedback && <div className="text-sm text-blue-600 mt-2 italic whitespace-pre-wrap">{taskProgress.feedback}</div>}
                         </div>
+                        {taskProgress.score !== undefined && (
+                          <div className="absolute top-4 right-4 bg-white border border-blue-200 px-3 py-1 rounded-full shadow-sm">
+                            <span className="text-sm font-black text-blue-700">+{taskProgress.score} pts</span>
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={() => handleRetake(task.id)}

@@ -6,7 +6,7 @@ import L from 'leaflet';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, Map as MapIcon, ChevronLeft } from 'lucide-react';
+import { LogOut, Map as MapIcon, ChevronLeft, Trophy } from 'lucide-react';
 import TaskSidebar from './TaskSidebar';
 
 // Fix Leaflet's default icon path issues
@@ -82,6 +82,8 @@ export default function UserMap() {
   const [selectedPoint, setSelectedPoint] = useState<MapPoint | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [completedPoints, setCompletedPoints] = useState<Set<string>>(new Set());
+  const [totalScore, setTotalScore] = useState(0);
+  const [totalFinishedTasks, setTotalFinishedTasks] = useState(0);
 
   useEffect(() => {
     const unsubMaps = onSnapshot(collection(db, 'maps'), (snapshot) => {
@@ -115,22 +117,39 @@ export default function UserMap() {
     return () => { unsubPoints(); unsubConnections(); };
   }, [currentMap]);
 
-  // Fetch user progress to determine completed points
+  // Fetch user progress to determine completed points and score
   useEffect(() => {
-    if (!user) return;
+    if (!user || !currentMap) return;
+    // We fetch all progress, but maybe we should filter by mapId?
+    // Since userProgress items only have pointId, we can just fetch all for the user and cross reference points,
+    // or just assume we show total score globally across everything. 
+    // Wait, the specification says "Give User Score Standing Consist of total Task Finished and Total Score", 
+    // it makes sense to show global score or map-specific. Let's do global for simplicity, or map-specific if we filter by points.
+    // Let's do map-specific:
     const unsubProgress = onSnapshot(query(collection(db, 'userProgress'), where('userId', '==', user.uid)), (snapshot) => {
       const progress = snapshot.docs.map(doc => doc.data());
-      // A point is completed if the user has correct answers for tasks. 
-      // For simplicity, we mark it completed if they have at least one correct answer for that point.
-      // In a real app, you'd check if ALL tasks for that point are correct.
       const completed = new Set<string>();
+      let score = 0;
+      let finished = 0;
+
+      // Make a set of pointIds in the current map to filter
+      const currentMapPointIds = new Set(points.map(p => p.id));
+
       progress.forEach(p => {
-        if (p.isCorrect) completed.add(p.pointId);
+        if (currentMapPointIds.has(p.pointId)) {
+          if (p.isCorrect) {
+            completed.add(p.pointId);
+            finished += 1;
+            score += (p.score || 0);
+          }
+        }
       });
       setCompletedPoints(completed);
+      setTotalScore(score);
+      setTotalFinishedTasks(finished);
     });
     return () => unsubProgress();
-  }, [user]);
+  }, [user, points]);
 
   const handleStartTask = (point: MapPoint) => {
     setSelectedPoint(point);
@@ -163,6 +182,25 @@ export default function UserMap() {
           </button>
         </div>
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 px-4 py-2 bg-gradient-to-r from-amber-100 to-yellow-50 border border-amber-200 rounded-xl shadow-sm">
+            <div className="flex items-center gap-2">
+              <div className="bg-amber-500 p-1.5 rounded-lg text-white">
+                <Trophy className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider leading-none">Score</span>
+                <span className="text-sm font-black text-amber-900 leading-tight">{totalScore} <span className="text-xs font-medium text-amber-700">pts</span></span>
+              </div>
+            </div>
+            <div className="w-px h-8 bg-amber-200"></div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider leading-none">Tasks</span>
+              <span className="text-sm font-black text-amber-900 leading-tight">{totalFinishedTasks} <span className="text-xs font-medium text-amber-700">done</span></span>
+            </div>
+          </div>
+          
+          <div className="h-6 w-px bg-stone-300 mx-2 hidden sm:block"></div>
+
           <span className="text-sm font-medium text-stone-700 hidden sm:block">
             {profile?.displayName}
           </span>

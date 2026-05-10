@@ -101,10 +101,12 @@ service cloud.firestore {
       return data.userId is string && data.userId.size() > 0 &&
              data.pointId is string && data.pointId.size() > 0 &&
              data.taskId is string && data.taskId.size() > 0 &&
-             data.userAnswer is string && data.userAnswer.size() < 1000 &&
+             data.userAnswer is string && data.userAnswer.size() < 4000 &&
              data.isCorrect is bool &&
              data.timestamp is string &&
-             (!('feedback' in data) || (data.feedback is string && data.feedback.size() < 1000));
+             data.score is number &&
+             data.attempts is number &&
+             (!('feedback' in data) || (data.feedback is string && data.feedback.size() < 4000));
     }
 
     // ===============================================================

@@ -93,9 +93,11 @@
         "userAnswer": { "type": "string" },
         "isCorrect": { "type": "boolean" },
         "feedback": { "type": "string" },
-        "timestamp": { "type": "string", "format": "date-time" }
+        "timestamp": { "type": "string", "format": "date-time" },
+        "attempts": { "type": "number" },
+        "score": { "type": "number" }
       },
-      "required": ["userId", "pointId", "taskId", "userAnswer", "isCorrect", "timestamp"]
+      "required": ["userId", "pointId", "taskId", "userAnswer", "isCorrect", "timestamp", "attempts", "score"]
     }
   },
   "firestore": {
