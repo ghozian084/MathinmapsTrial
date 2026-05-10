@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Map, MapPin, ListTodo, Users, Activity, LogOut, Link } from 'lucide-react';
+import { Map, MapPin, ListTodo, Users, Activity, LogOut, Link, Trophy } from 'lucide-react';
 import MapsManager from './MapsManager';
 import PointsManager from './PointsManager';
 import ConnectionsManager from './ConnectionsManager';
 import TasksManager from './TasksManager';
 import UsersManager from './UsersManager';
+import UserStandings from './UserStandings';
 import Monitoring from './Monitoring';
 
-type Tab = 'maps' | 'points' | 'connections' | 'tasks' | 'users' | 'monitoring';
+type Tab = 'maps' | 'points' | 'connections' | 'tasks' | 'users' | 'standings' | 'monitoring';
 
 export default function AdminDashboard() {
   const { signOut, profile } = useAuth();
@@ -20,6 +21,7 @@ export default function AdminDashboard() {
     { id: 'connections', label: 'Connections', icon: Link },
     { id: 'tasks', label: 'Tasks', icon: ListTodo },
     { id: 'users', label: 'Users', icon: Users },
+    { id: 'standings', label: 'Standings', icon: Trophy },
     { id: 'monitoring', label: 'Monitoring', icon: Activity },
   ] as const;
 
@@ -78,6 +80,7 @@ export default function AdminDashboard() {
           {activeTab === 'connections' && <ConnectionsManager />}
           {activeTab === 'tasks' && <TasksManager />}
           {activeTab === 'users' && <UsersManager />}
+          {activeTab === 'standings' && <UserStandings />}
           {activeTab === 'monitoring' && <Monitoring />}
         </div>
       </div>
