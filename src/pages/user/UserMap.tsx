@@ -58,8 +58,9 @@ interface MapPoint {
 interface MapConnection {
   id: string;
   mapId: string;
-  startPointId: string;
-  endPointId: string;
+  pointIds?: string[];
+  startPointId?: string;
+  endPointId?: string;
   connectionType: string;
 }
 
@@ -182,26 +183,33 @@ export default function UserMap() {
             center={[currentMap.centerLat, currentMap.centerLng]}
             zoom={currentMap.zoom}
             className="w-full h-full z-0"
+            maxZoom={22}
           >
             <ChangeView center={[currentMap.centerLat, currentMap.centerLng]} zoom={currentMap.zoom} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              maxNativeZoom={19}
+              maxZoom={22}
             />
             
             {/* Connections */}
             {connections.map(conn => {
-              const start = points.find(p => p.id === conn.startPointId);
-              const end = points.find(p => p.id === conn.endPointId);
-              if (!start || !end) return null;
+              const orderedPoints = (conn.pointIds || [conn.startPointId, conn.endPointId])
+                .map(id => points.find(p => p.id === id))
+                .filter(Boolean) as MapPoint[];
+
+              if (orderedPoints.length < 2) return null;
               
               const dashArray = conn.connectionType === 'walking' ? '5, 10' : conn.connectionType === 'water' ? '10, 20' : '';
               const color = conn.connectionType === 'water' ? '#3b82f6' : '#10b981';
 
+              const positions = orderedPoints.map(p => [p.lat, p.lng] as [number, number]);
+
               return (
                 <Polyline
                   key={conn.id}
-                  positions={[[start.lat, start.lng], [end.lat, end.lng]]}
+                  positions={positions}
                   color={color}
                   weight={4}
                   dashArray={dashArray}

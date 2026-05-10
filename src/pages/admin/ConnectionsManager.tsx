@@ -17,8 +17,9 @@ interface MapPoint {
 interface MapConnection {
   id: string;
   mapId: string;
-  startPointId: string;
-  endPointId: string;
+  pointIds?: string[];
+  startPointId?: string;
+  endPointId?: string;
   connectionType: 'walking' | 'road' | 'water';
 }
 
@@ -31,8 +32,7 @@ export default function ConnectionsManager() {
   
   const [formData, setFormData] = useState({
     mapId: '',
-    startPointId: '',
-    endPointId: '',
+    pointIds: ['', ''] as string[],
     connectionType: 'walking' as 'walking' | 'road' | 'water',
   });
 
@@ -51,19 +51,33 @@ export default function ConnectionsManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.startPointId === formData.endPointId) {
-      alert('Start and End points must be different.');
+    if (formData.pointIds.some(id => !id)) {
+      alert('Please select all points or remove empty ones.');
+      return;
+    }
+    if (new Set(formData.pointIds).size !== formData.pointIds.length) {
+      alert('Points in a connection route must be unique.');
       return;
     }
     try {
+      // Always store as pointIds, but for backwards compatibility in existing code you could map start/end
+      const dataToSave = {
+        mapId: formData.mapId,
+        pointIds: formData.pointIds,
+        // Legacy fields for robustness
+        startPointId: formData.pointIds[0] || '',
+        endPointId: formData.pointIds[formData.pointIds.length - 1] || '',
+        connectionType: formData.connectionType,
+      };
+
       if (editingConnection) {
-        await updateDoc(doc(db, 'mapConnections', editingConnection.id), formData);
+        await updateDoc(doc(db, 'mapConnections', editingConnection.id), dataToSave);
       } else {
-        await addDoc(collection(db, 'mapConnections'), formData);
+        await addDoc(collection(db, 'mapConnections'), dataToSave);
       }
       setIsModalOpen(false);
       setEditingConnection(null);
-      setFormData({ mapId: '', startPointId: '', endPointId: '', connectionType: 'walking' });
+      setFormData({ mapId: '', pointIds: ['', ''], connectionType: 'walking' });
     } catch (error) {
       console.error('Error saving connection:', error);
       alert('Error saving connection');
@@ -80,8 +94,7 @@ export default function ConnectionsManager() {
     setEditingConnection(conn);
     setFormData({
       mapId: conn.mapId,
-      startPointId: conn.startPointId,
-      endPointId: conn.endPointId,
+      pointIds: conn.pointIds || [conn.startPointId || '', conn.endPointId || ''],
       connectionType: conn.connectionType,
     });
     setIsModalOpen(true);
@@ -96,7 +109,7 @@ export default function ConnectionsManager() {
         <button
           onClick={() => {
             setEditingConnection(null);
-            setFormData({ mapId: maps[0]?.id || '', startPointId: '', endPointId: '', connectionType: 'walking' });
+            setFormData({ mapId: maps[0]?.id || '', pointIds: ['', ''], connectionType: 'walking' });
             setIsModalOpen(true);
           }}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
@@ -111,8 +124,7 @@ export default function ConnectionsManager() {
           <thead className="bg-stone-50 border-b border-stone-200 text-stone-600">
             <tr>
               <th className="px-6 py-4 font-medium">Map</th>
-              <th className="px-6 py-4 font-medium">Start Point</th>
-              <th className="px-6 py-4 font-medium">End Point</th>
+              <th className="px-6 py-4 font-medium">Route Points</th>
               <th className="px-6 py-4 font-medium">Type</th>
               <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
@@ -120,13 +132,13 @@ export default function ConnectionsManager() {
           <tbody className="divide-y divide-stone-200">
             {connections.map((conn) => {
               const map = maps.find(m => m.id === conn.mapId);
-              const start = points.find(p => p.id === conn.startPointId);
-              const end = points.find(p => p.id === conn.endPointId);
+              const routeIds = conn.pointIds || [conn.startPointId, conn.endPointId];
+              const routeNames = routeIds.map(id => points.find(p => p.id === id)?.title || 'Unknown').join(' ➔ ');
+              
               return (
                 <tr key={conn.id} className="hover:bg-stone-50">
                   <td className="px-6 py-4 font-medium text-stone-900">{map?.name || 'Unknown'}</td>
-                  <td className="px-6 py-4 text-stone-600">{start?.title || 'Unknown'}</td>
-                  <td className="px-6 py-4 text-stone-600">{end?.title || 'Unknown'}</td>
+                  <td className="px-6 py-4 text-stone-600 font-mono text-xs">{routeNames}</td>
                   <td className="px-6 py-4 text-stone-600 capitalize">{conn.connectionType}</td>
                   <td className="px-6 py-4 text-right">
                     <button
@@ -175,39 +187,61 @@ export default function ConnectionsManager() {
                   <select
                     required
                     value={formData.mapId}
-                    onChange={(e) => setFormData({ ...formData, mapId: e.target.value, startPointId: '', endPointId: '' })}
+                    onChange={(e) => setFormData({ ...formData, mapId: e.target.value, pointIds: ['', ''] })}
                     className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   >
                     <option value="" disabled>Select a map</option>
                     {maps.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                   </select>
                 </div>
+                
                 <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">Start Point</label>
-                  <select
-                    required
-                    value={formData.startPointId}
-                    onChange={(e) => setFormData({ ...formData, startPointId: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    disabled={!formData.mapId}
-                  >
-                    <option value="" disabled>Select start point</option>
-                    {filteredPoints.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                  </select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-stone-700">Route Sequence</label>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, pointIds: [...formData.pointIds, ''] })}
+                      className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+                      disabled={!formData.mapId}
+                    >
+                      + Add Point
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {formData.pointIds.map((pointId, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <span className="text-stone-400 font-mono text-sm">{index + 1}.</span>
+                        <select
+                          required
+                          value={pointId}
+                          onChange={(e) => {
+                            const newPointIds = [...formData.pointIds];
+                            newPointIds[index] = e.target.value;
+                            setFormData({ ...formData, pointIds: newPointIds });
+                          }}
+                          className="flex-1 px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                          disabled={!formData.mapId}
+                        >
+                          <option value="" disabled>Select point</option>
+                          {filteredPoints.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                        </select>
+                        {formData.pointIds.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newPointIds = formData.pointIds.filter((_, i) => i !== index);
+                              setFormData({ ...formData, pointIds: newPointIds });
+                            }}
+                            className="p-2 text-stone-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-stone-700 mb-1">End Point</label>
-                  <select
-                    required
-                    value={formData.endPointId}
-                    onChange={(e) => setFormData({ ...formData, endPointId: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    disabled={!formData.mapId}
-                  >
-                    <option value="" disabled>Select end point</option>
-                    {filteredPoints.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                  </select>
-                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-stone-700 mb-1">Connection Type</label>
                   <select

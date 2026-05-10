@@ -384,7 +384,7 @@ export default function TasksManager() {
                       type="number"
                       required
                       min="1"
-                      value={formData.taskNumber}
+                      value={Number.isNaN(formData.taskNumber) ? '' : formData.taskNumber}
                       onChange={(e) => setFormData({ ...formData, taskNumber: parseInt(e.target.value) })}
                       className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     />
@@ -411,9 +411,11 @@ export default function TasksManager() {
                     className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   >
                     <option value="short_answer">Short Answer</option>
-                    <option value="multiple_choice">Multiple Choice</option>
+                    <option value="multiple_choice">Multiple Choice (Single Answer)</option>
+                    <option value="multiple_select">Multiple Select (Multiple Answers)</option>
                     <option value="drag_drop">Drag and Drop</option>
                     <option value="interval">Interval (Range)</option>
+                    <option value="open_ended">Open Ended (Text Response)</option>
                   </select>
                 </div>
 
@@ -425,7 +427,7 @@ export default function TasksManager() {
                         type="number"
                         step="any"
                         required
-                        value={formData.minAnswer}
+                        value={Number.isNaN(formData.minAnswer) ? '' : formData.minAnswer}
                         onChange={(e) => setFormData({ ...formData, minAnswer: parseFloat(e.target.value) })}
                         className="w-full px-3 py-2 border border-stone-300 rounded-lg outline-none"
                       />
@@ -436,7 +438,7 @@ export default function TasksManager() {
                         type="number"
                         step="any"
                         required
-                        value={formData.maxAnswer}
+                        value={Number.isNaN(formData.maxAnswer) ? '' : formData.maxAnswer}
                         onChange={(e) => setFormData({ ...formData, maxAnswer: parseFloat(e.target.value) })}
                         className="w-full px-3 py-2 border border-stone-300 rounded-lg outline-none"
                       />
@@ -458,7 +460,7 @@ export default function TasksManager() {
                   />
                 </div>
 
-                {formData.type === 'multiple_choice' && (
+                {(formData.type === 'multiple_choice' || formData.type === 'multiple_select') && (
                   <div className="space-y-3 p-4 bg-stone-50 rounded-xl border border-stone-200">
                     <label className="block text-sm font-bold text-stone-700">Options</label>
                     {formData.options?.map((option, idx) => (
@@ -563,22 +565,27 @@ export default function TasksManager() {
                   </div>
                 )}
 
-                {formData.type !== 'interval' && (
+                {formData.type !== 'interval' && formData.type !== 'open_ended' && (
                   <div>
                     <label className="block text-sm font-medium text-stone-700 mb-1">
                       {formData.type === 'drag_drop' ? 'Answer Key (Internal)' : 'Correct Answer'}
                     </label>
                     <input
                       type="text"
-                      required={formData.type !== 'drag_drop' && formData.type !== 'interval'}
+                      required={formData.type !== 'drag_drop'}
                       value={formData.answerKeyRegex}
                       onChange={(e) => setFormData({ ...formData, answerKeyRegex: e.target.value })}
                       className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono text-sm"
-                      placeholder={formData.type === 'drag_drop' ? 'Not used for drag/drop' : 'e.g., Apple; Red Apple'}
+                      placeholder={formData.type === 'drag_drop' ? 'Not used for drag/drop' : formData.type === 'multiple_select' ? 'e.g., Option A; Option C' : 'e.g., Apple; Red Apple'}
                     />
                     {formData.type === 'short_answer' && (
                       <p className="text-[10px] text-stone-400 mt-1 italic">
                         Just type the plain text. Use ";" to separate multiple correct answers. Case and small typos are handled automatically.
+                      </p>
+                    )}
+                    {formData.type === 'multiple_select' && (
+                      <p className="text-[10px] text-stone-400 mt-1 italic">
+                        Use ";" to separate the exact text of correct options (e.g., "Option 1; Option 3").
                       </p>
                     )}
                   </div>

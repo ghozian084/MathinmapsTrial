@@ -48,11 +48,12 @@
       "type": "object",
       "properties": {
         "mapId": { "type": "string" },
+        "pointIds": { "type": "array", "items": { "type": "string" } },
         "startPointId": { "type": "string" },
         "endPointId": { "type": "string" },
         "connectionType": { "type": "string", "enum": ["walking", "road", "water"] }
       },
-      "required": ["mapId", "startPointId", "endPointId", "connectionType"]
+      "required": ["mapId", "connectionType"]
     },
     "Task": {
       "title": "Task",
@@ -62,7 +63,7 @@
         "pointId": { "type": "string" },
         "taskNumber": { "type": "number" },
         "question": { "type": "string" },
-        "type": { "type": "string", "enum": ["short_answer", "multiple_choice", "drag_drop", "interval"] },
+        "type": { "type": "string", "enum": ["short_answer", "multiple_choice", "drag_drop", "interval", "multiple_select", "open_ended"] },
         "answerKeyRegex": { "type": "string" },
         "minAnswer": { "type": "number" },
         "maxAnswer": { "type": "number" },

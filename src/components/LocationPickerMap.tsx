@@ -52,10 +52,13 @@ export default function LocationPickerMap({ lat, lng, zoom, onLocationSelect }: 
         center={[lat || -6.200000, lng || 106.816666]} // Default to Jakarta if 0,0
         zoom={zoom}
         className="h-full w-full"
+        maxZoom={22}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxNativeZoom={19}
+          maxZoom={22}
         />
         <LocationMarker position={position} setPosition={setPosition} />
       </MapContainer>

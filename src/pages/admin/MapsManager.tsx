@@ -201,7 +201,7 @@ export default function MapsManager() {
                       type="number"
                       step="any"
                       required
-                      value={formData.centerLat}
+                      value={Number.isNaN(formData.centerLat) ? '' : formData.centerLat}
                       onChange={(e) => setFormData({ ...formData, centerLat: parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-stone-50"
                     />
@@ -212,7 +212,7 @@ export default function MapsManager() {
                       type="number"
                       step="any"
                       required
-                      value={formData.centerLng}
+                      value={Number.isNaN(formData.centerLng) ? '' : formData.centerLng}
                       onChange={(e) => setFormData({ ...formData, centerLng: parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-stone-50"
                     />
@@ -224,7 +224,7 @@ export default function MapsManager() {
                       required
                       min="1"
                       max="20"
-                      value={formData.zoom}
+                      value={Number.isNaN(formData.zoom) ? '' : formData.zoom}
                       onChange={(e) => setFormData({ ...formData, zoom: parseInt(e.target.value) })}
                       className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                     />

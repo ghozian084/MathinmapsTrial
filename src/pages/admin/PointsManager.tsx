@@ -221,7 +221,7 @@ export default function PointsManager() {
                       type="number"
                       step="any"
                       required
-                      value={formData.lat}
+                      value={Number.isNaN(formData.lat) ? '' : formData.lat}
                       onChange={(e) => setFormData({ ...formData, lat: parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-stone-50"
                     />
@@ -232,7 +232,7 @@ export default function PointsManager() {
                       type="number"
                       step="any"
                       required
-                      value={formData.lng}
+                      value={Number.isNaN(formData.lng) ? '' : formData.lng}
                       onChange={(e) => setFormData({ ...formData, lng: parseFloat(e.target.value) })}
                       className="w-full px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-stone-50"
                     />

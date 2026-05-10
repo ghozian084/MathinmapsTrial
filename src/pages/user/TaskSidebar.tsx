@@ -169,12 +169,28 @@ export default function TaskSidebar({ isOpen, onClose, point, mapName }: TaskSid
       } else {
         isCorrect = false;
       }
+    } else if (taskType === 'multiple_select') {
+      try {
+        const studentAnswers = JSON.parse(answer) as string[];
+        const correctAnswers = (task.answerKeyRegex || '').split(';').map(s => s.trim().toLowerCase()).filter(Boolean);
+        const studentLower = studentAnswers.map(s => s.trim().toLowerCase());
+        
+        // Exact match of sets
+        isCorrect = correctAnswers.length > 0 
+          && correctAnswers.every(ca => studentLower.includes(ca)) 
+          && studentLower.length === correctAnswers.length;
+      } catch (e) {
+        isCorrect = false;
+      }
+    } else if (taskType === 'open_ended') {
+      isCorrect = true; // Open ended has no single right answer
     }
 
     let feedbackMsg = isCorrect ? 'Correct! Well done.' : 'Incorrect. Try again.';
+    if (taskType === 'open_ended') feedbackMsg = 'Response recorded successfully. Thank you!';
 
     try {
-      if (process.env.GEMINI_API_KEY) {
+      if (process.env.GEMINI_API_KEY && taskType !== 'open_ended') {
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         const prompt = `You are a helpful math tutor. 
 Context/Logic to follow: ${task.feedbackLogic || 'Provide constructive, encouraging feedback.'}
@@ -393,6 +409,37 @@ Keep the tone encouraging and educational. Format with clear paragraphs.`;
                         </div>
                       )}
 
+                      {task.type === 'multiple_select' && (
+                        <div className="space-y-2">
+                          {task.options?.map((option, i) => {
+                            const currentAnswers: string[] = answers[task.id] ? JSON.parse(answers[task.id]) : [];
+                            const isSelected = currentAnswers.includes(option);
+                            return (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => {
+                                  const newAnswers = isSelected
+                                    ? currentAnswers.filter(a => a !== option)
+                                    : [...currentAnswers, option];
+                                  setAnswers(prev => ({ ...prev, [task.id]: JSON.stringify(newAnswers) }));
+                                }}
+                                className={`w-full flex items-center gap-3 text-left px-4 py-3 rounded-xl border transition-all ${
+                                  isSelected
+                                    ? 'bg-blue-50 border-blue-500 text-blue-700 font-medium'
+                                    : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                                }`}
+                              >
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500 text-white' : 'border-stone-300 bg-white'}`}>
+                                  {isSelected && <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                                </div>
+                                {option}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
                       {task.type === 'drag_drop' && (
                         <div className="space-y-4">
                           <div className="bg-stone-50 rounded-xl p-3 border border-stone-200">
@@ -490,11 +537,23 @@ Keep the tone encouraging and educational. Format with clear paragraphs.`;
                           <p className="text-[10px] text-stone-400 italic">Enter your measurement or calculated value.</p>
                         </div>
                       )}
+
+                      {task.type === 'open_ended' && (
+                        <div className="space-y-2">
+                          <textarea
+                            placeholder="Type your response here..."
+                            rows={4}
+                            value={answers[task.id] || ''}
+                            onChange={(e) => setAnswers(prev => ({ ...prev, [task.id]: e.target.value }))}
+                            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-y"
+                          />
+                        </div>
+                      )}
                       
                       <div className="flex items-center gap-2">
                         <button
                           type="submit"
-                          disabled={!answers[task.id]?.trim() || isSubmitting[task.id]}
+                          disabled={!answers[task.id]?.trim() || (task.type === 'multiple_select' && answers[task.id] === '[]') || isSubmitting[task.id]}
                           className="flex-1 bg-blue-600 text-white font-medium py-2 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         >
                           {isSubmitting[task.id] ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Answer'}

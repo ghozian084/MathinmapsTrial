@@ -69,8 +69,9 @@ service cloud.firestore {
 
     function isValidMapConnection(data) {
       return data.mapId is string && data.mapId.size() > 0 &&
-             data.startPointId is string && data.startPointId.size() > 0 &&
-             data.endPointId is string && data.endPointId.size() > 0 &&
+             (!('startPointId' in data) || (data.startPointId is string && data.startPointId.size() > 0)) &&
+             (!('endPointId' in data) || (data.endPointId is string && data.endPointId.size() > 0)) &&
+             (!('pointIds' in data) || (data.pointIds is list && data.pointIds.size() >= 2 && data.pointIds.size() <= 50)) &&
              data.connectionType in ['walking', 'road', 'water'];
     }
 
@@ -78,7 +79,7 @@ service cloud.firestore {
       return data.pointId is string && data.pointId.size() > 0 &&
              data.taskNumber is number &&
              data.question is string && data.question.size() > 0 && data.question.size() < 2000 &&
-             data.type in ['short_answer', 'multiple_choice', 'drag_drop', 'interval'] &&
+             data.type in ['short_answer', 'multiple_choice', 'drag_drop', 'interval', 'multiple_select', 'open_ended'] &&
              (!('answerKeyRegex' in data) || (data.answerKeyRegex is string && data.answerKeyRegex.size() < 1000)) &&
              (!('minAnswer' in data) || data.minAnswer is number) &&
              (!('maxAnswer' in data) || data.maxAnswer is number) &&
