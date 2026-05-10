@@ -288,7 +288,7 @@ Keep the tone encouraging and educational. Format with clear paragraphs.`;
   if (!isOpen || !point) return null;
 
   return (
-    <div className="absolute top-0 right-0 h-full w-96 bg-white shadow-2xl border-l border-stone-200 flex flex-col z-20 transform transition-transform duration-300">
+    <div className="absolute top-0 right-0 h-full w-full md:w-[25vw] min-w-[24rem] max-w-2xl bg-white shadow-2xl border-l border-stone-200 flex flex-col z-20 transform transition-transform duration-300">
       <div className="flex items-center justify-between p-6 border-b border-stone-200 bg-stone-50 shrink-0">
         <div>
           <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">{mapName}</p>
@@ -334,9 +334,12 @@ Keep the tone encouraging and educational. Format with clear paragraphs.`;
                     <img src={task.imageUrl} alt={`Task ${task.taskNumber}`} className="w-full h-40 object-cover rounded-xl" />
                   )}
                   
+                  {/* Task description hidden on user view as requested */}
+                  {/*
                   {task.objectDescription && (
                     <p className="text-sm text-stone-500 italic border-l-2 border-stone-300 pl-3">{task.objectDescription}</p>
                   )}
+                  */}
 
                   <p className="text-stone-800 font-medium">{task.question}</p>
 

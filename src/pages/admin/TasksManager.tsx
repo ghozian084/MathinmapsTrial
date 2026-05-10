@@ -88,7 +88,7 @@ export default function TasksManager() {
       };
       
       // Clean up data based on type
-      if (dataToSave.type !== 'multiple_choice') delete dataToSave.options;
+      if (dataToSave.type !== 'multiple_choice' && dataToSave.type !== 'multiple_select') delete dataToSave.options;
       if (dataToSave.type !== 'drag_drop') {
         delete dataToSave.dragItems;
         delete dataToSave.dropTargets;
